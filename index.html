@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#00a884" />
-  <title>WhatsApp Family</title>
+  <title>Family WhatsApp</title>
 
-  <!-- PeerJS for WebRTC Direct Messaging & Calls -->
+  <!-- Open-source PeerJS for WebRTC Direct P2P -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 
   <style>
@@ -27,6 +27,7 @@
       --wa-blue-tick: #53bdeb;
       --wa-grey-tick: #8696a0;
       --wa-online: #22c55e;
+      --wa-danger: #ea0038;
     }
 
     * {
@@ -71,7 +72,7 @@
       }
     }
 
-    /* Modals & Overlays */
+    /* Modal dialogs */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -163,7 +164,7 @@
     }
 
     .error-msg {
-      color: #ea0038;
+      color: var(--wa-danger);
       font-size: 13px;
       margin-bottom: 12px;
       display: none;
@@ -193,6 +194,22 @@
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid var(--wa-border);
+    }
+
+    .search-box {
+      padding: 8px 14px;
+      background: #fff;
+      border-bottom: 1px solid var(--wa-border);
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 8px 14px;
+      background: #f0f2f5;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
     }
 
     .avatar {
@@ -338,7 +355,7 @@
       box-shadow: 0 1px 1.5px rgba(0,0,0,0.14);
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 4px;
     }
 
     @media (min-width: 768px) {
@@ -369,6 +386,7 @@
       align-self: flex-end;
     }
 
+    /* WhatsApp Tick Icons */
     .tick {
       font-size: 13px;
       letter-spacing: -2.5px;
@@ -378,6 +396,37 @@
     .tick.sent { color: var(--wa-grey-tick); }
     .tick.delivered { color: var(--wa-grey-tick); font-weight: bold; }
     .tick.read { color: var(--wa-blue-tick); font-weight: bold; }
+
+    /* Progress Bars for Media/Documents */
+    .progress-box {
+      margin: 6px 0;
+      padding: 8px;
+      background: rgba(0,0,0,0.05);
+      border-radius: 6px;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 6px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--wa-teal);
+      width: 0%;
+      transition: width 0.15s ease-out;
+    }
+
+    .progress-label {
+      font-size: 11px;
+      display: flex;
+      justify-content: space-between;
+      color: var(--wa-text-secondary);
+    }
 
     .chat-footer {
       min-height: 60px;
@@ -419,7 +468,6 @@
       font-size: 17px;
     }
 
-    /* Media Styling */
     .media-thumb-box {
       border-radius: 6px;
       overflow: hidden;
@@ -447,48 +495,62 @@
       color: inherit;
     }
 
-    /* Lightbox Modal */
-    #mediaLightbox {
+    /* Incoming Call Ringing Screen */
+    #incomingCallModal {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.96);
-      z-index: 15000;
+      background: rgba(11, 20, 26, 0.95);
+      z-index: 18000;
       display: none;
       flex-direction: column;
-    }
-
-    .lightbox-bar {
-      height: 54px;
-      padding: 0 16px;
-      display: flex;
       align-items: center;
-      justify-content: space-between;
-      color: white;
+      justify-content: center;
+      gap: 18px;
     }
 
-    .lightbox-body {
-      flex: 1;
+    .ring-avatar {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: var(--wa-teal);
+      color: white;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 12px;
+      font-size: 46px;
+      font-weight: bold;
+      animation: pulse 1.6s infinite;
     }
 
-    .lightbox-body img, .lightbox-body video {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(0, 168, 132, 0.7); }
+      70% { box-shadow: 0 0 0 26px rgba(0, 168, 132, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 168, 132, 0); }
     }
 
-    .lightbox-body iframe {
-      width: 100%;
-      height: 100%;
-      background: white;
+    .call-decision-btns {
+      display: flex;
+      gap: 40px;
+      margin-top: 25px;
+    }
+
+    .call-action-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
       border: none;
-      border-radius: 8px;
+      font-size: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
     }
 
-    /* Calling Overlay */
+    .call-action-btn.accept { background: var(--wa-online); }
+    .call-action-btn.decline { background: var(--wa-danger); }
+
+    /* Active Call Overlay */
     .call-overlay {
       position: fixed;
       inset: 0;
@@ -542,7 +604,7 @@
     }
 
     .call-btn.end {
-      background: #ea0038;
+      background: var(--wa-danger);
     }
 
     #attachmentMenu {
@@ -570,23 +632,63 @@
     .attach-item:hover {
       background: #f0f2f5;
     }
+
+    #mediaLightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.96);
+      z-index: 15000;
+      display: none;
+      flex-direction: column;
+    }
+
+    .lightbox-bar {
+      height: 54px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+    }
+
+    .lightbox-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    .lightbox-body img, .lightbox-body video {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .lightbox-body iframe {
+      width: 100%;
+      height: 100%;
+      background: white;
+      border: none;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
 
 <div class="app-wrapper">
 
-  <!-- 1. Authentication & Register Modal -->
+  <!-- 1. Authentication Modal (Register First / Login) -->
   <div id="authModal" class="modal-overlay">
     <div class="modal-card">
-      <h2 id="authTitle">Family Login</h2>
-      <p id="authSubtitle">Checking credentials with Google Sheets...</p>
+      <h2 id="authTitle">Register Profile</h2>
+      <p id="authSubtitle">Join the family directory to begin chatting</p>
       
       <div id="authError" class="error-msg"></div>
 
       <div class="form-group">
-        <label>Family Member Name</label>
-        <input type="text" id="authNameInput" class="app-input" placeholder="e.g. Naresh, Manasa, Naithika" />
+        <label>Your Name</label>
+        <input type="text" id="authNameInput" class="app-input" placeholder="e.g. John, Sarah" />
       </div>
 
       <div class="form-group">
@@ -594,12 +696,12 @@
         <input type="password" maxlength="6" id="authPinInput" class="app-input" inputmode="numeric" placeholder="••••••" style="letter-spacing: 4px;" />
       </div>
 
-      <button class="app-btn" id="authSubmitBtn" onclick="handleAuthSubmit()">Login</button>
-      <button class="app-btn secondary" id="authToggleBtn" onclick="toggleAuthMode()">New member? Join Family</button>
+      <button class="app-btn" id="authSubmitBtn" onclick="handleAuthSubmit()">Create Profile & Register</button>
+      <button class="app-btn secondary" id="authToggleBtn" onclick="toggleAuthMode()">Already registered? Login</button>
     </div>
   </div>
 
-  <!-- Sidebar: Contacts -->
+  <!-- Sidebar: Contacts Directory & Realtime Search -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <div style="display:flex; align-items:center; gap:10px;">
@@ -609,8 +711,15 @@
           <div style="font-size: 11px; color: var(--wa-teal-dark);">● Connected</div>
         </div>
       </div>
-      <button class="icon-btn" onclick="logout()" title="Switch User">🔄</button>
+      <button class="icon-btn" onclick="logout()" title="Switch Account">🔄</button>
     </div>
+
+    <!-- Search Input -->
+    <div class="search-box">
+      <input type="text" id="searchBar" class="search-input" placeholder="🔍 Search family members..." oninput="handleSearch(this.value)" />
+    </div>
+
+    <!-- Contact List -->
     <div id="contactList" style="overflow-y:auto; flex:1;"></div>
   </aside>
 
@@ -624,8 +733,8 @@
         <small id="chatPeerStatus" style="font-size: 11px; color: var(--wa-text-secondary);">Direct WebRTC P2P</small>
       </div>
       <div style="display:flex; gap:2px;">
-        <button class="icon-btn" onclick="startCall(false)" title="Voice Call">📞</button>
-        <button class="icon-btn" onclick="startCall(true)" title="Video Call">📹</button>
+        <button class="icon-btn" onclick="triggerCall(false)" title="Voice Call">📞</button>
+        <button class="icon-btn" onclick="triggerCall(true)" title="Video Call">📹</button>
       </div>
     </div>
 
@@ -636,11 +745,11 @@
     <div id="attachmentMenu">
       <label class="attach-item">
         📷 Photos & Videos
-        <input type="file" accept="image/*,video/*,audio/*" style="display: none;" onchange="handleFileSelected(event)">
+        <input type="file" accept="image/*,video/*,audio/*" style="display: none;" onchange="dispatchFile(event)">
       </label>
       <label class="attach-item">
-        📄 Documents & PDFs
-        <input type="file" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.zip" style="display: none;" onchange="handleFileSelected(event)">
+        📄 Documents & Files
+        <input type="file" style="display: none;" onchange="dispatchFile(event)">
       </label>
     </div>
 
@@ -653,11 +762,36 @@
   </main>
 </div>
 
-<!-- Fullscreen Media Lightbox -->
+<!-- Incoming Call Ringing Screen -->
+<div id="incomingCallModal">
+  <div class="ring-avatar" id="ringAvatar">?</div>
+  <h2 id="ringCallerName" style="color: white; font-size: 24px;">Family Member</h2>
+  <p id="ringCallType" style="color: #8696a0;">Incoming Video Call...</p>
+  
+  <div class="call-decision-btns">
+    <button class="call-action-btn decline" onclick="rejectIncomingCall()">✕</button>
+    <button class="call-action-btn accept" onclick="acceptIncomingCall()">✓</button>
+  </div>
+</div>
+
+<!-- Active Video/Voice Calling Screen -->
+<div class="call-overlay" id="callOverlay">
+  <div class="call-streams">
+    <video id="remoteVideo" autoplay playsinline></video>
+    <video id="localVideo" autoplay muted playsinline></video>
+  </div>
+  <div class="call-controls">
+    <button class="call-btn" id="muteMicBtn" onclick="toggleAudio()">🎤</button>
+    <button class="call-btn" id="muteCamBtn" onclick="toggleVideo()">📹</button>
+    <button class="call-btn end" onclick="terminateCall()">☎</button>
+  </div>
+</div>
+
+<!-- Lightbox Modal -->
 <div id="mediaLightbox">
   <div class="lightbox-bar">
-    <span id="lightboxTitle" style="max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">File Preview</span>
-    <div style="display: flex; gap: 10px;">
+    <span id="lightboxTitle" style="max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Preview</span>
+    <div style="display:flex; gap:10px;">
       <button class="icon-btn" style="color:white;" id="lightboxDownloadBtn">⬇️</button>
       <button class="icon-btn" style="color:white;" onclick="closeLightbox()">✕</button>
     </div>
@@ -665,68 +799,98 @@
   <div class="lightbox-body" id="lightboxBody"></div>
 </div>
 
-<!-- Calling Overlay -->
-<div class="call-overlay" id="callOverlay">
-  <div class="call-streams">
-    <video id="remoteVideo" autoplay playsinline></video>
-    <video id="localVideo" autoplay muted playsinline></video>
-  </div>
-  <div class="call-controls">
-    <button class="call-btn" id="muteMicBtn" onclick="toggleAudioTrack()">🎤</button>
-    <button class="call-btn" id="muteCamBtn" onclick="toggleVideoTrack()">📹</button>
-    <button class="call-btn end" onclick="hangUpCall()">☎</button>
-  </div>
-</div>
-
 <script>
   /* ==========================================================
-     1. GOOGLE APPS SCRIPT URL CONFIGURATION
+     1. CONFIGURATION & STATE
   ========================================================== */
-  // Paste your published Google Apps Script Web App URL below
   const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbz1zqVJviRo9zQIWzEAFmLFRMbyzHVGjyu-s09TBhFnFCjhiFFKx0RdmWUqtTFbAEajlg/exec";
-
-  // Built-in offline fallback directory
-  const DEFAULT_FALLBACK_MEMBERS = {
-    naresh: { name: 'Naresh', pin: '112233', id: 'wa-p2p-fam-naresh-prod' },
-    manasa: { name: 'Manasa', pin: '445566', id: 'wa-p2p-fam-manasa-prod' },
-    naithika: { name: 'Naithika', pin: '778899', id: 'wa-p2p-fam-naithika-prod' }
-  };
+  const CHUNK_SIZE = 16384; // 16KB WebRTC chunks for smooth transfer
 
   let family = {};
   let currentUserId = null;
   let activeRecipientKey = null;
-  let isJoinMode = false;
+  let isRegisterMode = true; // First time opens in register mode
   let peer = null;
   let activeConnections = {};
   let onlinePeers = new Set();
-  let localMediaStream = null;
-  let activeCall = null;
   let db = null;
 
+  // Cached Stream to prevent re-asking permissions
+  let persistentLocalStream = null;
+  let activeCallSession = null;
+  let incomingCallObject = null;
+  let ringtoneOscillator = null;
+  let audioContext = null;
+
+  // File chunk assembly store
+  let incomingTransfers = {};
+
   /* ==========================================================
-     2. DEVICE-LOCAL INDEXEDDB FOR COMPLETE CHAT HISTORY
+     2. PERSISTENT PERMISSION & RINGTONE SYNTHESIZER
+  ========================================================== */
+  async function requestPersistentMediaPermissions() {
+    if (persistentLocalStream) return persistentLocalStream;
+    try {
+      persistentLocalStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      // Pause tracks until a call begins so camera indicator light goes off
+      persistentLocalStream.getVideoTracks().forEach(t => t.enabled = false);
+      persistentLocalStream.getAudioTracks().forEach(t => t.enabled = false);
+      return persistentLocalStream;
+    } catch (e) {
+      console.warn("Media permissions deferred until first call:", e);
+      return null;
+    }
+  }
+
+  function startRingingSound() {
+    try {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(440, audioContext.currentTime);
+      gain.gain.setValueAtTime(0.2, audioContext.currentTime);
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.start();
+      ringtoneOscillator = { osc, gain };
+    } catch (e) {}
+  }
+
+  function stopRingingSound() {
+    if (ringtoneOscillator) {
+      try {
+        ringtoneOscillator.osc.stop();
+        ringtoneOscillator.osc.disconnect();
+      } catch (e) {}
+      ringtoneOscillator = null;
+    }
+  }
+
+  /* ==========================================================
+     3. DEVICE INDEXED-DB STORE (Permanent Local Storage)
   ========================================================== */
   function initLocalDB() {
-    return new Promise((resolve) => {
-      const req = indexedDB.open("FamilyWhatsAppDB_v4", 1);
-      req.onupgradeneeded = (e) => {
+    return new Promise((res) => {
+      const r = indexedDB.open("WhatsAppFamilyP2P_v5", 1);
+      r.onupgradeneeded = (e) => {
         const d = e.target.result;
         if (!d.objectStoreNames.contains("messages")) {
           const store = d.createObjectStore("messages", { keyPath: "id" });
           store.createIndex("chatWith", "chatWith", { unique: false });
         }
       };
-      req.onsuccess = (e) => {
+      r.onsuccess = (e) => {
         db = e.target.result;
-        resolve();
+        res();
       };
     });
   }
 
-  function saveMessageLocally(messageObj) {
+  function saveMessageLocally(obj) {
     if (!db) return;
     const tx = db.transaction("messages", "readwrite");
-    tx.objectStore("messages").put(messageObj);
+    tx.objectStore("messages").put(obj);
   }
 
   function updateMessageStatusLocally(msgId, status) {
@@ -742,475 +906,609 @@
     };
   }
 
-  function loadChatHistoryFromDevice(contactKey) {
+  function loadChatHistory(contactKey) {
     if (!db) return;
-    const container = document.getElementById('messagesContainer');
-    container.innerHTML = '';
-
+    const box = document.getElementById("messagesContainer");
+    box.innerHTML = "";
     const tx = db.transaction("messages", "readonly");
-    const store = tx.objectStore("messages");
-    const index = store.index("chatWith");
-    const req = index.getAll(contactKey);
-
-    req.onsuccess = () => {
-      const messages = req.result || [];
-      messages.forEach(m => {
-        if (m.type === 'chat') {
+    tx.objectStore("messages").index("chatWith").getAll(contactKey).onsuccess = (e) => {
+      (e.target.result || []).forEach(m => {
+        if (m.type === "chat") {
           renderChatBubble(m, m.direction, m.status, false);
-        } else if (m.type === 'media') {
+        } else {
           renderMediaBubble(m, m.direction, m.status, false);
         }
       });
-      container.scrollTop = container.scrollHeight;
+      box.scrollTop = box.scrollHeight;
     };
   }
 
   /* ==========================================================
-     3. GOOGLE SHEET AUTHENTICATION & DIRECTORY SYNC
+     4. GOOGLE SHEETS REGISTRATION & LOGIN
   ========================================================== */
-  async function syncUsersFromGoogleSheet() {
+  async function syncMembersFromGoogleSheet() {
+    const cached = localStorage.getItem("wa_cached_family");
+    if (cached) {
+      try { family = JSON.parse(cached); } catch (e) {}
+    }
     if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL.includes("YOUR_DEPLOYED_GOOGLE_SCRIPT")) {
-      console.warn("Using offline fallback directory. To enable cloud sync, insert your Google Apps Script Web App URL.");
-      family = { ...DEFAULT_FALLBACK_MEMBERS };
       return;
     }
-
     try {
       const resp = await fetch(`${GOOGLE_SHEET_API_URL}?action=getUsers`);
       const data = await resp.json();
       if (data.status === "success" && data.users) {
-        family = Object.assign({}, DEFAULT_FALLBACK_MEMBERS, data.users);
+        family = data.users;
+        localStorage.setItem("wa_cached_family", JSON.stringify(family));
       }
     } catch (err) {
-      console.error("Google Sheets fetch error, using local cache:", err);
-      family = { ...DEFAULT_FALLBACK_MEMBERS };
+      console.warn("Could not sync from Google Sheet, running on local cache.");
     }
   }
 
   async function registerUserToGoogleSheet(name, pin, peerId) {
     if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL.includes("YOUR_DEPLOYED_GOOGLE_SCRIPT")) {
-      return true; // Bypass in offline simulation mode
+      return true; // Bypass if URL not yet configured
     }
-
     try {
       await fetch(GOOGLE_SHEET_API_URL, {
         method: "POST",
-        mode: "no-cors", // Allows cross-origin Google Script requests
+        mode: "no-cors",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "register", name: name, pin: pin, peerId: peerId })
+        body: JSON.stringify({ action: "register", name, pin, peerId })
       });
       return true;
-    } catch (err) {
-      console.error("Google Sheets write error:", err);
+    } catch (e) {
       return false;
     }
   }
 
-  /* ==========================================================
-     4. AUTHENTICATION CONTROLLER
-  ========================================================== */
   function toggleAuthMode() {
-    isJoinMode = !isJoinMode;
-    const title = document.getElementById('authTitle');
-    const sub = document.getElementById('authSubtitle');
-    const submitBtn = document.getElementById('authSubmitBtn');
-    const toggleBtn = document.getElementById('authToggleBtn');
-    const err = document.getElementById('authError');
-    err.style.display = 'none';
+    isRegisterMode = !isRegisterMode;
+    const title = document.getElementById("authTitle");
+    const sub = document.getElementById("authSubtitle");
+    const submitBtn = document.getElementById("authSubmitBtn");
+    const toggleBtn = document.getElementById("authToggleBtn");
+    document.getElementById("authError").style.display = "none";
 
-    if (isJoinMode) {
-      title.textContent = 'Join Family';
-      sub.textContent = 'Your credentials will be saved in Google Sheet';
-      submitBtn.textContent = 'Create Profile & Register';
-      toggleBtn.textContent = 'Already in family? Login';
+    if (isRegisterMode) {
+      title.textContent = "Register Profile";
+      sub.textContent = "Join the family directory to begin chatting";
+      submitBtn.textContent = "Create Profile & Register";
+      toggleBtn.textContent = "Already registered? Login";
     } else {
-      title.textContent = 'Family Login';
-      sub.textContent = 'Enter your registered Name and PIN';
-      submitBtn.textContent = 'Login';
-      toggleBtn.textContent = 'New member? Join Family';
+      title.textContent = "Family Login";
+      sub.textContent = "Enter your registered name and 6-digit PIN";
+      submitBtn.textContent = "Login";
+      toggleBtn.textContent = "Need to register? Join here";
     }
   }
 
   async function handleAuthSubmit() {
-    const nameRaw = document.getElementById('authNameInput').value.trim();
-    const pin = document.getElementById('authPinInput').value.trim();
-    const err = document.getElementById('authError');
+    const name = document.getElementById("authNameInput").value.trim();
+    const pin = document.getElementById("authPinInput").value.trim();
+    const err = document.getElementById("authError");
 
-    if (!nameRaw || pin.length !== 6 || isNaN(pin)) {
-      err.textContent = 'Provide a valid name and a 6-digit PIN.';
-      err.style.display = 'block';
+    if (!name || pin.length !== 6 || isNaN(pin)) {
+      err.textContent = "Enter a valid Name and a 6-digit numeric PIN.";
+      err.style.display = "block";
       return;
     }
 
-    const key = nameRaw.toLowerCase().replace(/\s+/g, '');
+    const key = name.toLowerCase().replace(/\s+/g, "");
 
-    if (isJoinMode) {
+    if (isRegisterMode) {
       if (family[key]) {
-        err.textContent = 'This member name already exists. Please log in instead.';
-        err.style.display = 'block';
+        err.textContent = "This member name is already registered. Please log in.";
+        err.style.display = "block";
         return;
       }
-      const newPeerId = `wa-fam-${key}-${Date.now().toString(36)}`;
-      family[key] = { name: nameRaw, pin: pin, id: newPeerId };
-      
-      await registerUserToGoogleSheet(nameRaw, pin, newPeerId);
+      const newPeerId = `wa-p2p-${key}-${Date.now().toString(36)}`;
+      family[key] = { name, pin, id: newPeerId };
+      localStorage.setItem("wa_cached_family", JSON.stringify(family));
+      await registerUserToGoogleSheet(name, pin, newPeerId);
       completeLogin(key);
     } else {
-      const match = Object.keys(family).find(k => k === key || family[k].name.toLowerCase() === nameRaw.toLowerCase());
-      if (match && String(family[match].pin) === String(pin)) {
-        completeLogin(match);
+      const matchKey = Object.keys(family).find(k => k === key || family[k].name.toLowerCase() === name.toLowerCase());
+      if (matchKey && String(family[matchKey].pin) === String(pin)) {
+        completeLogin(matchKey);
       } else {
-        err.textContent = 'Incorrect Name or PIN according to Google Sheet directory.';
-        err.style.display = 'block';
+        err.textContent = "Incorrect name or PIN. Make sure you have registered first.";
+        err.style.display = "block";
       }
     }
   }
 
-  function completeLogin(userKey) {
+  async function completeLogin(userKey) {
     currentUserId = userKey;
-    localStorage.setItem('wa_active_user', userKey);
-    document.getElementById('authModal').style.display = 'none';
-    document.getElementById('myProfileName').textContent = family[userKey].name;
-    document.getElementById('myProfileAvatar').textContent = family[userKey].name[0];
+    localStorage.setItem("wa_active_user", userKey);
+    document.getElementById("authModal").style.display = "none";
+    document.getElementById("myProfileName").textContent = family[userKey].name;
+    document.getElementById("myProfileAvatar").textContent = family[userKey].name[0];
 
+    await requestPersistentMediaPermissions();
     renderContacts();
     initWebRTC();
   }
 
   function logout() {
-    localStorage.removeItem('wa_active_user');
+    localStorage.removeItem("wa_active_user");
     location.reload();
   }
 
   /* ==========================================================
-     5. CONTACT DIRECTORY DISPLAY
+     5. CONTACT DIRECTORY & REAL-TIME SEARCH
   ========================================================== */
-  function renderContacts() {
-    const container = document.getElementById('contactList');
-    container.innerHTML = '';
+  function renderContacts(query = "") {
+    const container = document.getElementById("contactList");
+    container.innerHTML = "";
 
-    const list = Object.keys(family)
+    const filtered = Object.keys(family)
       .filter(k => k !== currentUserId)
+      .filter(k => family[k].name.toLowerCase().includes(query.toLowerCase()))
       .sort((a, b) => (onlinePeers.has(b) ? 1 : 0) - (onlinePeers.has(a) ? 1 : 0));
 
-    list.forEach(key => {
-      const contact = family[key];
+    if (filtered.length === 0) {
+      container.innerHTML = `<div style="text-align: center; color: var(--wa-text-secondary); padding: 24px; font-size: 13px;">No registered members found.</div>`;
+      return;
+    }
+
+    filtered.forEach(key => {
+      const c = family[key];
       const isOnline = onlinePeers.has(key);
-      const item = document.createElement('div');
-      item.className = `contact-item ${activeRecipientKey === key ? 'active' : ''}`;
-      item.onclick = () => openChat(key);
-      item.innerHTML = `
-        <div class="avatar ${isOnline ? 'online' : ''}">${contact.name[0]}</div>
+      const div = document.createElement("div");
+      div.className = `contact-item ${activeRecipientKey === key ? "active" : ""}`;
+      div.onclick = () => openChat(key);
+      div.innerHTML = `
+        <div class="avatar ${isOnline ? "online" : ""}">${c.name[0]}</div>
         <div class="contact-details">
-          <div class="contact-title"><span>${contact.name}</span></div>
-          <div class="contact-status ${isOnline ? 'online-text' : ''}">
-            ${isOnline ? 'online' : 'tap to chat'}
+          <div class="contact-title"><span>${c.name}</span></div>
+          <div class="contact-status ${isOnline ? "online-text" : ""}">
+            ${isOnline ? "online" : "tap to chat"}
           </div>
         </div>
       `;
-      container.appendChild(item);
+      container.appendChild(div);
     });
   }
 
+  function handleSearch(q) {
+    renderContacts(q);
+  }
+
   /* ==========================================================
-     6. WEBRTC (PEERJS) DIRECT DATACHANNEL NETWORKING
+     6. WEBRTC CONNECTIVITY & INCOMING CALL RINGING
   ========================================================== */
   function initWebRTC() {
     peer = new Peer(family[currentUserId].id, {
       config: {
         iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' }
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" }
         ]
       }
     });
 
-    peer.on('open', () => {
+    peer.on("open", () => {
       Object.keys(family).forEach(k => {
         if (k !== currentUserId) connectToPeer(k);
       });
     });
 
-    peer.on('connection', setupConnectionHandlers);
+    peer.on("connection", bindConnection);
 
-    peer.on('call', async (call) => {
-      const callerKey = Object.keys(family).find(k => family[k].id === call.peer);
-      const name = callerKey ? family[callerKey].name : 'Family';
-      const isVideo = call.metadata?.video !== false;
+    // Incoming Call Hook
+    peer.on("call", (incoming) => {
+      incomingCallObject = incoming;
+      const callerKey = Object.keys(family).find(k => family[k].id === incoming.peer);
+      const callerName = callerKey ? family[callerKey].name : "Family Member";
+      const isVideo = incoming.metadata?.video !== false;
 
-      if (confirm(`Incoming ${isVideo ? 'Video' : 'Voice'} Call from ${name}. Answer?`)) {
-        openChat(callerKey);
-        try {
-          localMediaStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
-          document.getElementById('localVideo').srcObject = localMediaStream;
-          document.getElementById('callOverlay').style.display = 'flex';
-          call.answer(localMediaStream);
-          activeCall = call;
+      document.getElementById("ringAvatar").textContent = callerName[0];
+      document.getElementById("ringCallerName").textContent = callerName;
+      document.getElementById("ringCallType").textContent = `Incoming ${isVideo ? "Video" : "Voice"} Call...`;
+      document.getElementById("incomingCallModal").style.display = "flex";
 
-          call.on('stream', (remote) => {
-            document.getElementById('remoteVideo').srcObject = remote;
-          });
-          call.on('close', hangUpCall);
-        } catch (e) {
-          alert('Device camera/mic error: ' + e.message);
-        }
-      }
+      startRingingSound();
     });
   }
 
   function connectToPeer(targetKey) {
     if (activeConnections[targetKey]?.open) return;
     const conn = peer.connect(family[targetKey].id, { reliable: true });
-    setupConnectionHandlers(conn);
+    bindConnection(conn);
   }
 
-  function setupConnectionHandlers(conn) {
-    conn.on('open', () => {
-      const partnerKey = Object.keys(family).find(k => family[k].id === conn.peer);
-      if (partnerKey) {
-        activeConnections[partnerKey] = conn;
-        onlinePeers.add(partnerKey);
-        renderContacts();
-
-        if (activeRecipientKey === partnerKey) {
-          emitReceipt(partnerKey, null, 'read');
-        }
+  function bindConnection(conn) {
+    conn.on("open", () => {
+      const partner = Object.keys(family).find(k => family[k].id === conn.peer);
+      if (partner) {
+        activeConnections[partner] = conn;
+        onlinePeers.add(partner);
+        renderContacts(document.getElementById("searchBar").value);
+        if (activeRecipientKey === partner) emitReceipt(partner, null, "read");
       }
     });
 
-    conn.on('data', (packet) => handleIncomingPacket(packet, conn.peer));
+    conn.on("data", (packet) => handleIncomingData(packet, conn.peer));
 
-    conn.on('close', () => {
-      const partnerKey = Object.keys(family).find(k => family[k].id === conn.peer);
-      if (partnerKey) {
-        delete activeConnections[partnerKey];
-        onlinePeers.delete(partnerKey);
-        renderContacts();
+    conn.on("close", () => {
+      const partner = Object.keys(family).find(k => family[k].id === conn.peer);
+      if (partner) {
+        delete activeConnections[partner];
+        onlinePeers.delete(partner);
+        renderContacts(document.getElementById("searchBar").value);
       }
     });
   }
 
   /* ==========================================================
-     7. READ RECEIPTS & RECEIPT HANDLERS
+     7. CALL ACCEPT / REJECT / ACTIVE SESSION
   ========================================================== */
-  function handleIncomingPacket(packet, peerId) {
-    const senderKey = Object.keys(family).find(k => family[k].id === peerId);
-    if (!senderKey) return;
+  async function acceptIncomingCall() {
+    stopRingingSound();
+    document.getElementById("incomingCallModal").style.display = "none";
+    if (!incomingCallObject) return;
 
-    if (packet.type === 'receipt') {
+    const isVideo = incomingCallObject.metadata?.video !== false;
+    if (!persistentLocalStream) await requestPersistentMediaPermissions();
+
+    persistentLocalStream.getVideoTracks().forEach(t => t.enabled = isVideo);
+    persistentLocalStream.getAudioTracks().forEach(t => t.enabled = true);
+
+    document.getElementById("localVideo").srcObject = persistentLocalStream;
+    document.getElementById("callOverlay").style.display = "flex";
+
+    incomingCallObject.answer(persistentLocalStream);
+    activeCallSession = incomingCallObject;
+
+    incomingCallObject.on("stream", (rem) => {
+      document.getElementById("remoteVideo").srcObject = rem;
+    });
+    incomingCallObject.on("close", terminateCall);
+  }
+
+  function rejectIncomingCall() {
+    stopRingingSound();
+    document.getElementById("incomingCallModal").style.display = "none";
+    if (incomingCallObject) {
+      incomingCallObject.close();
+      incomingCallObject = null;
+    }
+  }
+
+  async function triggerCall(isVideo) {
+    if (!activeRecipientKey) return;
+    if (!persistentLocalStream) await requestPersistentMediaPermissions();
+
+    persistentLocalStream.getVideoTracks().forEach(t => t.enabled = isVideo);
+    persistentLocalStream.getAudioTracks().forEach(t => t.enabled = true);
+
+    document.getElementById("localVideo").srcObject = persistentLocalStream;
+    document.getElementById("callOverlay").style.display = "flex";
+
+    const call = peer.call(family[activeRecipientKey].id, persistentLocalStream, { metadata: { video: isVideo } });
+    activeCallSession = call;
+
+    call.on("stream", (rem) => {
+      document.getElementById("remoteVideo").srcObject = rem;
+    });
+    call.on("close", terminateCall);
+  }
+
+  function toggleAudio() {
+    if (persistentLocalStream) {
+      const track = persistentLocalStream.getAudioTracks()[0];
+      if (track) {
+        track.enabled = !track.enabled;
+        document.getElementById("muteMicBtn").textContent = track.enabled ? "🎤" : "🔇";
+      }
+    }
+  }
+
+  function toggleVideo() {
+    if (persistentLocalStream) {
+      const track = persistentLocalStream.getVideoTracks()[0];
+      if (track) {
+        track.enabled = !track.enabled;
+        document.getElementById("muteCamBtn").textContent = track.enabled ? "📹" : "🚫";
+      }
+    }
+  }
+
+  function terminateCall() {
+    stopRingingSound();
+    document.getElementById("incomingCallModal").style.display = "none";
+    document.getElementById("callOverlay").style.display = "none";
+
+    if (activeCallSession) {
+      activeCallSession.close();
+      activeCallSession = null;
+    }
+    if (persistentLocalStream) {
+      // Keep tracks authorized, just disable hardware streaming
+      persistentLocalStream.getVideoTracks().forEach(t => t.enabled = false);
+      persistentLocalStream.getAudioTracks().forEach(t => t.enabled = false);
+    }
+    document.getElementById("remoteVideo").srcObject = null;
+    document.getElementById("localVideo").srcObject = null;
+  }
+
+  /* ==========================================================
+     8. CHUNKED MEDIA WITH DYNAMIC PROGRESS BARS
+  ========================================================== */
+  function toggleAttachmentMenu() {
+    const m = document.getElementById("attachmentMenu");
+    m.style.display = m.style.display === "flex" ? "none" : "flex";
+  }
+
+  function dispatchFile(event) {
+    toggleAttachmentMenu();
+    const file = event.target.files[0];
+    if (!file || !activeRecipientKey) return;
+
+    const fileId = "file-" + Date.now();
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+    const isConn = activeConnections[activeRecipientKey]?.open;
+
+    // Create Sender Initial Bubble with Progress
+    const placeholder = {
+      id: fileId,
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      time: getCurrentTime(),
+      direction: "sent"
+    };
+    renderProgressBubble(placeholder, "Uploading...");
+
+    const reader = new FileReader();
+    let offset = 0;
+    let chunkIndex = 0;
+    let fullBase64Data = "";
+
+    // Read full for local preview & offline cache
+    const previewReader = new FileReader();
+    previewReader.onload = (ev) => {
+      fullBase64Data = ev.target.result;
+    };
+    previewReader.readAsDataURL(file);
+
+    reader.onload = (e) => {
+      if (isConn) {
+        activeConnections[activeRecipientKey].send({
+          type: "file-chunk",
+          fileId,
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          chunkIndex,
+          totalChunks,
+          chunkData: e.target.result,
+          time: placeholder.time
+        });
+      }
+
+      offset += e.target.result.byteLength;
+      chunkIndex++;
+      const percent = Math.round((chunkIndex / totalChunks) * 100);
+      updateProgressBar(fileId, percent, `Uploading... ${percent}%`);
+
+      if (offset < file.size) {
+        readSlice(offset);
+      } else {
+        // Complete Sender
+        setTimeout(() => {
+          removeProgressBar(fileId);
+          const packet = {
+            type: "media",
+            id: fileId,
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size,
+            data: fullBase64Data,
+            time: placeholder.time
+          };
+          saveMessageLocally({ ...packet, chatWith: activeRecipientKey, direction: "sent", status: isConn ? "sent" : "queued" });
+          renderMediaBubble(packet, "sent", isConn ? "sent" : "queued", true, fileId);
+        }, 300);
+      }
+    };
+
+    function readSlice(o) {
+      reader.readAsArrayBuffer(file.slice(o, o + CHUNK_SIZE));
+    }
+    readSlice(0);
+    event.target.value = "";
+  }
+
+  function handleIncomingData(packet, peerId) {
+    const sender = Object.keys(family).find(k => family[k].id === peerId);
+    if (!sender) return;
+
+    if (packet.type === "receipt") {
       updateTickUI(packet.msgId, packet.status);
       updateMessageStatusLocally(packet.msgId, packet.status);
       return;
     }
 
-    if (packet.type === 'chat' || packet.type === 'media') {
-      // 1. Acknowledge delivery
-      emitReceipt(senderKey, packet.id, 'delivered');
+    if (packet.type === "chat") {
+      emitReceipt(sender, packet.id, "delivered");
+      if (activeRecipientKey === sender) emitReceipt(sender, packet.id, "read");
 
-      // 2. Acknowledge read if active
-      const isViewing = activeRecipientKey === senderKey;
-      if (isViewing) {
-        emitReceipt(senderKey, packet.id, 'read');
-      }
+      saveMessageLocally({ ...packet, chatWith: sender, direction: "received", status: activeRecipientKey === sender ? "read" : "delivered" });
+      if (activeRecipientKey === sender) renderChatBubble(packet, "received", "delivered", true);
+    }
 
-      // 3. Persist in local browser IndexedDB permanently
-      saveMessageLocally({
-        ...packet,
-        chatWith: senderKey,
-        direction: 'received',
-        status: isViewing ? 'read' : 'delivered'
-      });
-
-      // 4. Render only if current conversation is open
-      if (isViewing) {
-        if (packet.type === 'chat') {
-          renderChatBubble(packet, 'received', 'delivered', true);
-        } else {
-          renderMediaBubble(packet, 'received', 'delivered', true);
+    // Chunk Receiver with Realtime Progress
+    if (packet.type === "file-chunk") {
+      if (!incomingTransfers[packet.fileId]) {
+        incomingTransfers[packet.fileId] = {
+          chunks: [],
+          received: 0,
+          total: packet.totalChunks,
+          meta: packet
+        };
+        // Render receiving progress bar
+        if (activeRecipientKey === sender) {
+          renderProgressBubble({ ...packet, id: packet.fileId, direction: "received" }, "Downloading...");
         }
       }
+
+      const item = incomingTransfers[packet.fileId];
+      item.chunks[packet.chunkIndex] = packet.chunkData;
+      item.received++;
+
+      const percent = Math.round((item.received / item.total) * 100);
+      updateProgressBar(packet.fileId, percent, `Downloading... ${percent}%`);
+
+      if (item.received === item.total) {
+        // Assemble Binary to Base64
+        const blob = new Blob(item.chunks, { type: packet.fileType });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const finalData = reader.result;
+          removeProgressBar(packet.fileId);
+
+          const finalPacket = {
+            type: "media",
+            id: packet.fileId,
+            fileName: packet.fileName,
+            fileType: packet.fileType,
+            fileSize: packet.fileSize,
+            data: finalData,
+            time: packet.time
+          };
+
+          emitReceipt(sender, packet.fileId, "delivered");
+          if (activeRecipientKey === sender) emitReceipt(sender, packet.fileId, "read");
+
+          saveMessageLocally({ ...finalPacket, chatWith: sender, direction: "received", status: activeRecipientKey === sender ? "read" : "delivered" });
+          if (activeRecipientKey === sender) renderMediaBubble(finalPacket, "received", "delivered", true, packet.fileId);
+          delete incomingTransfers[packet.fileId];
+        };
+        reader.readAsDataURL(blob);
+      }
     }
   }
 
-  function emitReceipt(targetKey, msgId, status) {
-    if (activeConnections[targetKey]?.open) {
-      activeConnections[targetKey].send({
-        type: 'receipt',
-        msgId: msgId,
-        status: status
-      });
-    }
+  /* Progress UI Helpers */
+  function renderProgressBubble(data, label) {
+    const box = document.getElementById("messagesContainer");
+    const div = document.createElement("div");
+    div.className = `message ${data.direction}`;
+    div.id = `msg-${data.id}`;
+    div.innerHTML = `
+      <div style="font-weight: 600; font-size: 13px;">${escapeHTML(data.fileName)}</div>
+      <div class="progress-box">
+        <div class="progress-label"><span id="lbl-${data.id}">${label}</span><span id="pct-${data.id}">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar-${data.id}"></div></div>
+      </div>
+      <div class="msg-meta"><span>${data.time || getCurrentTime()}</span></div>
+    `;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
   }
 
-  function updateTickUI(msgId, status) {
-    if (!msgId) {
-      document.querySelectorAll('.tick.sent, .tick.delivered').forEach(el => {
-        el.className = 'tick read';
-        el.textContent = '✓✓';
-      });
-      return;
-    }
-    const tickEl = document.getElementById(`tick-${msgId}`);
-    if (!tickEl) return;
+  function updateProgressBar(id, pct, text) {
+    const bar = document.getElementById(`bar-${id}`);
+    const pctEl = document.getElementById(`pct-${id}`);
+    const lbl = document.getElementById(`lbl-${id}`);
+    if (bar) bar.style.width = pct + "%";
+    if (pctEl) pctEl.textContent = pct + "%";
+    if (lbl && text) lbl.textContent = text;
+  }
 
-    if (status === 'delivered') {
-      tickEl.className = 'tick delivered';
-      tickEl.textContent = '✓✓';
-    } else if (status === 'read') {
-      tickEl.className = 'tick read';
-      tickEl.textContent = '✓✓';
-    }
+  function removeProgressBar(id) {
+    const el = document.getElementById(`msg-${id}`);
+    if (el) el.remove();
   }
 
   /* ==========================================================
-     8. CHAT, MEDIA PREVIEWS & BUBBLE RENDERING
+     9. UI RENDERING: CHAT BUBBLES, LIGHTBOX & RECEIPTS
   ========================================================== */
   function openChat(targetKey) {
     activeRecipientKey = targetKey;
-    document.getElementById('chatTitle').textContent = family[targetKey].name;
-    document.getElementById('chatAvatar').textContent = family[targetKey].name[0];
-    document.getElementById('chatView').classList.add('active');
+    document.getElementById("chatTitle").textContent = family[targetKey].name;
+    document.getElementById("chatAvatar").textContent = family[targetKey].name[0];
+    document.getElementById("chatView").classList.add("active");
 
     connectToPeer(targetKey);
-    renderContacts();
-
-    // Load conversation history from client device
-    loadChatHistoryFromDevice(targetKey);
-    emitReceipt(targetKey, null, 'read');
+    renderContacts(document.getElementById("searchBar").value);
+    loadChatHistory(targetKey);
+    emitReceipt(targetKey, null, "read");
   }
 
   function closeChat() {
-    document.getElementById('chatView').classList.remove('active');
+    document.getElementById("chatView").classList.remove("active");
     activeRecipientKey = null;
   }
 
   function sendText() {
-    const input = document.getElementById('chatInput');
+    const input = document.getElementById("chatInput");
     const text = input.value.trim();
     if (!text || !activeRecipientKey) return;
 
-    const msgId = 'msg-' + Date.now();
-    const isConnected = activeConnections[activeRecipientKey]?.open;
-    const initialStatus = isConnected ? 'sent' : 'queued';
+    const msgId = "msg-" + Date.now();
+    const isConn = activeConnections[activeRecipientKey]?.open;
+    const initialStatus = isConn ? "sent" : "queued";
 
     const packet = {
-      type: 'chat',
+      type: "chat",
       id: msgId,
-      text: text,
+      text,
       from: currentUserId,
       to: activeRecipientKey,
       time: getCurrentTime()
     };
 
-    saveMessageLocally({
-      ...packet,
-      chatWith: activeRecipientKey,
-      direction: 'sent',
-      status: initialStatus
-    });
+    saveMessageLocally({ ...packet, chatWith: activeRecipientKey, direction: "sent", status: initialStatus });
+    renderChatBubble(packet, "sent", initialStatus, true);
 
-    renderChatBubble(packet, 'sent', initialStatus, true);
-
-    if (isConnected) {
-      activeConnections[activeRecipientKey].send(packet);
-    }
-
-    input.value = '';
+    if (isConn) activeConnections[activeRecipientKey].send(packet);
+    input.value = "";
   }
 
-  function renderChatBubble(data, direction, status = 'delivered', shouldScroll = true) {
-    const container = document.getElementById('messagesContainer');
-    const msg = document.createElement('div');
+  function renderChatBubble(data, direction, status = "delivered", scroll = true) {
+    const box = document.getElementById("messagesContainer");
+    const msg = document.createElement("div");
     msg.className = `message ${direction}`;
     msg.id = `msg-${data.id}`;
 
-    const tickMarkup = direction === 'sent'
-      ? `<span class="tick ${status}" id="tick-${data.id}">${status === 'queued' ? '🕒' : status === 'read' ? '✓✓' : '✓'}</span>`
-      : '';
+    const tick = direction === "sent"
+      ? `<span class="tick ${status}" id="tick-${data.id}">${status === "queued" ? "🕒" : status === "read" ? "✓✓" : "✓"}</span>`
+      : "";
 
     msg.innerHTML = `
       <div>${escapeHTML(data.text)}</div>
-      <div class="msg-meta">
-        <span>${data.time || getCurrentTime()}</span>
-        ${tickMarkup}
-      </div>
+      <div class="msg-meta"><span>${data.time || getCurrentTime()}</span>${tick}</div>
     `;
-    container.appendChild(msg);
-    if (shouldScroll) container.scrollTop = container.scrollHeight;
+    box.appendChild(msg);
+    if (scroll) box.scrollTop = box.scrollHeight;
   }
 
-  function toggleAttachmentMenu() {
-    const menu = document.getElementById('attachmentMenu');
-    menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
-  }
-
-  function handleFileSelected(e) {
-    toggleAttachmentMenu();
-    const file = e.target.files[0];
-    if (!file || !activeRecipientKey) return;
-
-    const fileId = 'file-' + Date.now();
-    const isConnected = activeConnections[activeRecipientKey]?.open;
-    const initialStatus = isConnected ? 'sent' : 'queued';
-    const reader = new FileReader();
-
-    reader.onload = (event) => {
-      const dataUri = event.target.result;
-      const packet = {
-        type: 'media',
-        id: fileId,
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size,
-        data: dataUri,
-        from: currentUserId,
-        to: activeRecipientKey,
-        time: getCurrentTime()
-      };
-
-      saveMessageLocally({
-        ...packet,
-        chatWith: activeRecipientKey,
-        direction: 'sent',
-        status: initialStatus
-      });
-
-      renderMediaBubble(packet, 'sent', initialStatus, true);
-
-      if (isConnected) {
-        activeConnections[activeRecipientKey].send(packet);
-      }
-    };
-
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  }
-
-  function renderMediaBubble(data, direction, status = 'delivered', shouldScroll = true) {
-    const container = document.getElementById('messagesContainer');
-    const msg = document.createElement('div');
+  function renderMediaBubble(data, direction, status = "delivered", scroll = true, replaceId = null) {
+    const box = document.getElementById("messagesContainer");
+    let msg = replaceId ? document.getElementById(`msg-${replaceId}`) : null;
+    if (!msg) {
+      msg = document.createElement("div");
+      msg.id = `msg-${data.id}`;
+      box.appendChild(msg);
+    }
     msg.className = `message ${direction}`;
-    msg.id = `msg-${data.id}`;
 
-    const tickMarkup = direction === 'sent'
-      ? `<span class="tick ${status}" id="tick-${data.id}">${status === 'queued' ? '🕒' : status === 'read' ? '✓✓' : '✓'}</span>`
-      : '';
+    const tick = direction === "sent"
+      ? `<span class="tick ${status}" id="tick-${data.id}">${status === "queued" ? "🕒" : status === "read" ? "✓✓" : "✓"}</span>`
+      : "";
 
-    let content = '';
-    const type = data.fileType || '';
+    let content = "";
+    const type = data.fileType || "";
 
-    if (type.startsWith('image/')) {
-      content = `
-        <div class="media-thumb-box" onclick="openLightbox('${data.data}', '${escapeHTML(data.fileName)}', 'image')">
-          <img src="${data.data}" alt="${escapeHTML(data.fileName)}" />
-        </div>`;
-    } else if (type.startsWith('video/')) {
-      content = `
-        <div class="media-thumb-box" onclick="openLightbox('${data.data}', '${escapeHTML(data.fileName)}', 'video')">
-          <video src="${data.data}"></video>
-        </div>`;
-    } else if (type.startsWith('audio/')) {
+    if (type.startsWith("image/")) {
+      content = `<div class="media-thumb-box" onclick="openLightbox('${data.data}', '${escapeHTML(data.fileName)}', 'image')"><img src="${data.data}" /></div>`;
+    } else if (type.startsWith("video/")) {
+      content = `<div class="media-thumb-box" onclick="openLightbox('${data.data}', '${escapeHTML(data.fileName)}', 'video')"><video src="${data.data}"></video></div>`;
+    } else if (type.startsWith("audio/")) {
       content = `<audio src="${data.data}" controls style="width: 100%; margin: 4px 0;"></audio>`;
     } else {
       content = `
@@ -1218,127 +1516,83 @@
           <span style="font-size: 26px;">📄</span>
           <div style="overflow: hidden;">
             <div style="font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${escapeHTML(data.fileName)}</div>
-            <small style="color: var(--wa-text-secondary);">${formatBytes(data.fileSize)} • View</small>
+            <small style="color: var(--wa-text-secondary);">${formatBytes(data.fileSize)} • Tap to view</small>
           </div>
         </div>`;
     }
 
-    msg.innerHTML = `
-      ${content}
-      <div class="msg-meta">
-        <span>${data.time || getCurrentTime()}</span>
-        ${tickMarkup}
-      </div>
-    `;
-    container.appendChild(msg);
-    if (shouldScroll) container.scrollTop = container.scrollHeight;
+    msg.innerHTML = `${content}<div class="msg-meta"><span>${data.time || getCurrentTime()}</span>${tick}</div>`;
+    if (scroll) box.scrollTop = box.scrollHeight;
   }
 
-  /* Lightbox Controls */
+  function emitReceipt(target, msgId, status) {
+    if (activeConnections[target]?.open) {
+      activeConnections[target].send({ type: "receipt", msgId, status });
+    }
+  }
+
+  function updateTickUI(msgId, status) {
+    if (!msgId) {
+      document.querySelectorAll(".tick.sent, .tick.delivered").forEach(el => {
+        el.className = "tick read";
+        el.textContent = "✓✓";
+      });
+      return;
+    }
+    const tick = document.getElementById(`tick-${msgId}`);
+    if (tick) {
+      tick.className = `tick ${status}`;
+      tick.textContent = "✓✓";
+    }
+  }
+
   function openLightbox(url, name, kind) {
-    const box = document.getElementById('mediaLightbox');
-    const body = document.getElementById('lightboxBody');
-    document.getElementById('lightboxTitle').textContent = name;
-    document.getElementById('lightboxDownloadBtn').onclick = () => {
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = name;
-      a.click();
+    const box = document.getElementById("mediaLightbox");
+    const body = document.getElementById("lightboxBody");
+    document.getElementById("lightboxTitle").textContent = name;
+    document.getElementById("lightboxDownloadBtn").onclick = () => {
+      const a = document.createElement("a"); a.href = url; a.download = name; a.click();
     };
 
-    body.innerHTML = '';
-    if (kind === 'image') {
-      body.innerHTML = `<img src="${url}" alt="${name}" />`;
-    } else if (kind === 'video') {
-      body.innerHTML = `<video src="${url}" controls autoplay playsinline></video>`;
-    } else {
-      body.innerHTML = `<iframe src="${url}"></iframe>`;
-    }
-    box.style.display = 'flex';
+    body.innerHTML = "";
+    if (kind === "image") body.innerHTML = `<img src="${url}" />`;
+    else if (kind === "video") body.innerHTML = `<video src="${url}" controls autoplay playsinline></video>`;
+    else body.innerHTML = `<iframe src="${url}"></iframe>`;
+    box.style.display = "flex";
   }
 
   function closeLightbox() {
-    document.getElementById('mediaLightbox').style.display = 'none';
-    document.getElementById('lightboxBody').innerHTML = '';
+    document.getElementById("mediaLightbox").style.display = "none";
   }
 
   /* ==========================================================
-     9. CALLING ENGINE & UTILITIES
+     10. HELPERS & STARTUP
   ========================================================== */
-  async function startCall(isVideo) {
-    if (!activeRecipientKey) return;
-    try {
-      localMediaStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
-      document.getElementById('localVideo').srcObject = localMediaStream;
-      document.getElementById('callOverlay').style.display = 'flex';
-
-      const call = peer.call(family[activeRecipientKey].id, localMediaStream, { metadata: { video: isVideo } });
-      activeCall = call;
-
-      call.on('stream', (remote) => {
-        document.getElementById('remoteVideo').srcObject = remote;
-      });
-      call.on('close', hangUpCall);
-    } catch (e) {
-      alert('Camera/Microphone error: ' + e.message);
-    }
-  }
-
-  function toggleAudioTrack() {
-    if (localMediaStream) {
-      const track = localMediaStream.getAudioTracks()[0];
-      if (track) {
-        track.enabled = !track.enabled;
-        document.getElementById('muteMicBtn').textContent = track.enabled ? '🎤' : '🔇';
-      }
-    }
-  }
-
-  function toggleVideoTrack() {
-    if (localMediaStream) {
-      const track = localMediaStream.getVideoTracks()[0];
-      if (track) {
-        track.enabled = !track.enabled;
-        document.getElementById('muteCamBtn').textContent = track.enabled ? '📹' : '🚫';
-      }
-    }
-  }
-
-  function hangUpCall() {
-    if (activeCall) activeCall.close();
-    if (localMediaStream) localMediaStream.getTracks().forEach(t => t.stop());
-    document.getElementById('callOverlay').style.display = 'none';
-    document.getElementById('remoteVideo').srcObject = null;
-    document.getElementById('localVideo').srcObject = null;
-  }
-
   function getCurrentTime() {
-    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
   function formatBytes(bytes) {
-    if (!bytes) return '0 B';
+    if (!bytes) return "0 B";
     const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
   }
 
   function escapeHTML(str) {
-    return (str || '').replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t] || t));
+    return (str || "").replace(/[&<>'"]/g, t => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[t] || t));
   }
 
-  /* App Entrypoint */
-  window.addEventListener('DOMContentLoaded', async () => {
+  window.addEventListener("DOMContentLoaded", async () => {
     await initLocalDB();
-    await syncUsersFromGoogleSheet();
+    await syncMembersFromGoogleSheet();
 
-    const stored = localStorage.getItem('wa_active_user');
-    if (stored && family[stored]) {
-      completeLogin(stored);
+    const storedUser = localStorage.getItem("wa_active_user");
+    if (storedUser && family[storedUser]) {
+      completeLogin(storedUser);
     } else {
-      document.getElementById('authSubtitle').textContent = 'Enter your name and 6-digit PIN';
-      document.getElementById('authModal').style.display = 'flex';
+      document.getElementById("authModal").style.display = "flex";
     }
   });
 </script>
