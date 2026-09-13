@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#00a884" />
+  <title>WhatsApp Family</title>
+
+  <!-- PeerJS for WebRTC Direct Messaging & Calls -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+  <style>
+    :root {
+      --wa-teal: #00a884;
+      --wa-teal-dark: #008069;
+      --wa-bg: #efeae2;
+      --wa-panel-bg: #ffffff;
+      --wa-msg-out: #d9fdd3;
+      --wa-msg-in: #ffffff;
+      --wa-text-primary: #111b21;
+      --wa-text-secondary: #667781;
+      --wa-border: #e9edef;
+      --wa-header: #f0f2f5;
+      --wa-blue-tick: #53bdeb;
+      --wa-grey-tick: #8696a0;
+      --wa-online: #22c55e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: #111b21;
+      position: fixed;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--wa-text-primary);
+    }
+
+    .app-wrapper {
+      width: 100vw;
+      height: 100dvh;
+      display: flex;
+      background: var(--wa-panel-bg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media (min-width: 900px) {
+      .app-wrapper {
+        max-width: 1300px;
+        height: 96dvh;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+    }
+
+    /* Modals & Overlays */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 20, 26, 0.88);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 16px;
+    }
+
+    .modal-card {
+      background: white;
+      padding: 26px 22px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    .modal-card h2 {
+      color: var(--wa-teal-dark);
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+
+    .modal-card p {
+      font-size: 13px;
+      color: var(--wa-text-secondary);
+      margin-bottom: 18px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+      text-align: left;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--wa-text-secondary);
+      text-transform: uppercase;
+    }
+
+    .app-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--wa-border);
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+      background: #fafafa;
+    }
+
+    .app-input:focus {
+      border-color: var(--wa-teal);
+      background: white;
+    }
+
+    .app-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      background: var(--wa-teal);
+      color: white;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .app-btn:hover {
+      background: var(--wa-teal-dark);
+    }
+
+    .app-btn.secondary {
+      background: #f0f2f5;
+      color: var(--wa-text-primary);
+      margin-top: 10px;
+      border: 1px solid var(--wa-border);
+    }
+
+    .error-msg {
+      color: #ea0038;
+      font-size: 13px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    /* Sidebar Layout */
+    .sidebar {
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--wa-border);
+    }
+
+    @media (min-width: 768px) {
+      .sidebar {
+        width: 380px;
+      }
+    }
+
+    .sidebar-header {
+      height: 64px;
+      background: var(--wa-header);
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--wa-border);
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--wa-teal);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 18px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .avatar.online::after {
+      content: '';
+      position: absolute;
+      bottom: 1px;
+      right: 1px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--wa-online);
+      border: 2px solid white;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid #f6f7f8;
+    }
+
+    .contact-item:hover, .contact-item.active {
+      background: #f0f2f5;
+    }
+
+    .contact-details {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .contact-title {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .contact-status {
+      font-size: 13px;
+      color: var(--wa-text-secondary);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .contact-status.online-text {
+      color: var(--wa-teal-dark);
+      font-weight: 500;
+    }
+
+    /* Main Chat Interface */
+    .chat-view {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--wa-bg);
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+      transform: translateX(100%);
+      transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+    }
+
+    @media (min-width: 768px) {
+      .chat-view {
+        position: relative;
+        transform: none;
+        flex: 1;
+        z-index: 1;
+      }
+    }
+
+    .chat-view.active {
+      transform: translateX(0);
+    }
+
+    .chat-header {
+      height: 64px;
+      background: var(--wa-header);
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--wa-border);
+      flex-shrink: 0;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--wa-text-secondary);
+      padding: 6px;
+    }
+
+    @media (min-width: 768px) {
+      .back-btn {
+        display: none;
+      }
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background-image: radial-gradient(#d1d7db 10%, transparent 11%);
+      background-size: 16px 16px;
+    }
+
+    .message {
+      max-width: 82%;
+      padding: 7px 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.4;
+      word-break: break-word;
+      position: relative;
+      box-shadow: 0 1px 1.5px rgba(0,0,0,0.14);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    @media (min-width: 768px) {
+      .message {
+        max-width: 62%;
+      }
+    }
+
+    .message.sent {
+      align-self: flex-end;
+      background: var(--wa-msg-out);
+      border-top-right-radius: 0;
+    }
+
+    .message.received {
+      align-self: flex-start;
+      background: var(--wa-msg-in);
+      border-top-left-radius: 0;
+    }
+
+    .msg-meta {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--wa-text-secondary);
+      align-self: flex-end;
+    }
+
+    .tick {
+      font-size: 13px;
+      letter-spacing: -2.5px;
+      margin-left: 2px;
+    }
+    .tick.queued { color: var(--wa-grey-tick); }
+    .tick.sent { color: var(--wa-grey-tick); }
+    .tick.delivered { color: var(--wa-grey-tick); font-weight: bold; }
+    .tick.read { color: var(--wa-blue-tick); font-weight: bold; }
+
+    .chat-footer {
+      min-height: 60px;
+      background: var(--wa-header);
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: white;
+      border-radius: 20px;
+      border: 1px solid white;
+      padding: 10px 16px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .icon-btn, .send-btn {
+      background: none;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      color: var(--wa-text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .send-btn {
+      background: var(--wa-teal);
+      color: white;
+      font-size: 17px;
+    }
+
+    /* Media Styling */
+    .media-thumb-box {
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: pointer;
+      background: rgba(0,0,0,0.05);
+      margin-top: 2px;
+    }
+
+    .media-thumb-box img, .media-thumb-box video {
+      max-width: 100%;
+      max-height: 260px;
+      display: block;
+      object-fit: cover;
+    }
+
+    .doc-bubble {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      background: rgba(0,0,0,0.04);
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* Lightbox Modal */
+    #mediaLightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.96);
+      z-index: 15000;
+      display: none;
+      flex-direction: column;
+    }
+
+    .lightbox-bar {
+      height: 54px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+    }
+
+    .lightbox-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    .lightbox-body img, .lightbox-body video {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .lightbox-body iframe {
+      width: 100%;
+      height: 100%;
+      background: white;
+      border: none;
+      border-radius: 8px;
+    }
+
+    /* Calling Overlay */
+    .call-overlay {
+      position: fixed;
+      inset: 0;
+      background: #111b21;
+      z-index: 16000;
+      display: none;
+      flex-direction: column;
+    }
+
+    .call-streams {
+      flex: 1;
+      position: relative;
+    }
+
+    video#remoteVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    video#localVideo {
+      position: absolute;
+      bottom: 20px;
+      right: 16px;
+      width: 110px;
+      height: 155px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: #202c33;
+      border: 2px solid white;
+    }
+
+    .call-controls {
+      height: 84px;
+      background: #202c33;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .call-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: white;
+      background: #374248;
+    }
+
+    .call-btn.end {
+      background: #ea0038;
+    }
+
+    #attachmentMenu {
+      display: none;
+      position: absolute;
+      bottom: 65px;
+      left: 10px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      padding: 6px;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    .attach-item {
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .attach-item:hover {
+      background: #f0f2f5;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- 1. Authentication & Register Modal -->
+  <div id="authModal" class="modal-overlay">
+    <div class="modal-card">
+      <h2 id="authTitle">Family Login</h2>
+      <p id="authSubtitle">Checking credentials with Google Sheets...</p>
+      
+      <div id="authError" class="error-msg"></div>
+
+      <div class="form-group">
+        <label>Family Member Name</label>
+        <input type="text" id="authNameInput" class="app-input" placeholder="e.g. Naresh, Manasa, Naithika" />
+      </div>
+
+      <div class="form-group">
+        <label>6-Digit PIN</label>
+        <input type="password" maxlength="6" id="authPinInput" class="app-input" inputmode="numeric" placeholder="••••••" style="letter-spacing: 4px;" />
+      </div>
+
+      <button class="app-btn" id="authSubmitBtn" onclick="handleAuthSubmit()">Login</button>
+      <button class="app-btn secondary" id="authToggleBtn" onclick="toggleAuthMode()">New member? Join Family</button>
+    </div>
+  </div>
+
+  <!-- Sidebar: Contacts -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="avatar" id="myProfileAvatar">?</div>
+        <div>
+          <strong id="myProfileName">Me</strong>
+          <div style="font-size: 11px; color: var(--wa-teal-dark);">● Connected</div>
+        </div>
+      </div>
+      <button class="icon-btn" onclick="logout()" title="Switch User">🔄</button>
+    </div>
+    <div id="contactList" style="overflow-y:auto; flex:1;"></div>
+  </aside>
+
+  <!-- Main Active Conversation -->
+  <main class="chat-view" id="chatView">
+    <div class="chat-header">
+      <button class="back-btn" onclick="closeChat()">←</button>
+      <div class="avatar" id="chatAvatar">?</div>
+      <div style="flex:1; overflow:hidden;">
+        <h4 id="chatTitle">Member</h4>
+        <small id="chatPeerStatus" style="font-size: 11px; color: var(--wa-text-secondary);">Direct WebRTC P2P</small>
+      </div>
+      <div style="display:flex; gap:2px;">
+        <button class="icon-btn" onclick="startCall(false)" title="Voice Call">📞</button>
+        <button class="icon-btn" onclick="startCall(true)" title="Video Call">📹</button>
+      </div>
+    </div>
+
+    <!-- Message Scroller -->
+    <div class="chat-messages" id="messagesContainer"></div>
+
+    <!-- Attachment Popup -->
+    <div id="attachmentMenu">
+      <label class="attach-item">
+        📷 Photos & Videos
+        <input type="file" accept="image/*,video/*,audio/*" style="display: none;" onchange="handleFileSelected(event)">
+      </label>
+      <label class="attach-item">
+        📄 Documents & PDFs
+        <input type="file" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.zip" style="display: none;" onchange="handleFileSelected(event)">
+      </label>
+    </div>
+
+    <!-- Footer Controls -->
+    <footer class="chat-footer">
+      <button class="icon-btn" onclick="toggleAttachmentMenu()">📎</button>
+      <input type="text" id="chatInput" class="chat-input" placeholder="Type a message" onkeydown="if(event.key==='Enter') sendText()">
+      <button class="send-btn" onclick="sendText()">➤</button>
+    </footer>
+  </main>
+</div>
+
+<!-- Fullscreen Media Lightbox -->
+<div id="mediaLightbox">
+  <div class="lightbox-bar">
+    <span id="lightboxTitle" style="max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">File Preview</span>
+    <div style="display: flex; gap: 10px;">
+      <button class="icon-btn" style="color:white;" id="lightboxDownloadBtn">⬇️</button>
+      <button class="icon-btn" style="color:white;" onclick="closeLightbox()">✕</button>
+    </div>
+  </div>
+  <div class="lightbox-body" id="lightboxBody"></div>
+</div>
+
+<!-- Calling Overlay -->
+<div class="call-overlay" id="callOverlay">
+  <div class="call-streams">
+    <video id="remoteVideo" autoplay playsinline></video>
+    <video id="localVideo" autoplay muted playsinline></video>
+  </div>
+  <div class="call-controls">
+    <button class="call-btn" id="muteMicBtn" onclick="toggleAudioTrack()">🎤</button>
+    <button class="call-btn" id="muteCamBtn" onclick="toggleVideoTrack()">📹</button>
+    <button class="call-btn end" onclick="hangUpCall()">☎</button>
+  </div>
+</div>
+
+<script>
+  /* ==========================================================
+     1. GOOGLE APPS SCRIPT URL CONFIGURATION
+  ========================================================== */
+  // Paste your published Google Apps Script Web App URL below
+  const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbz1zqVJviRo9zQIWzEAFmLFRMbyzHVGjyu-s09TBhFnFCjhiFFKx0RdmWUqtTFbAEajlg/exec";
+
+  // Built-in offline fallback directory
+  const DEFAULT_FALLBACK_MEMBERS = {
+    naresh: { name: 'Naresh', pin: '112233', id: 'wa-p2p-fam-naresh-prod' },
+    manasa: { name: 'Manasa', pin: '445566', id: 'wa-p2p-fam-manasa-prod' },
+    naithika: { name: 'Naithika', pin: '778899', id: 'wa-p2p-fam-naithika-prod' }
+  };
+
+  let family = {};
+  let currentUserId = null;
+  let activeRecipientKey = null;
+  let isJoinMode = false;
+  let peer = null;
+  let activeConnections = {};
+  let onlinePeers = new Set();
+  let localMediaStream = null;
+  let activeCall = null;
+  let db = null;
+
+  /* ==========================================================
+     2. DEVICE-LOCAL INDEXEDDB FOR COMPLETE CHAT HISTORY
+  ========================================================== */
+  function initLocalDB() {
+    return new Promise((resolve) => {
+      const req = indexedDB.open("FamilyWhatsAppDB_v4", 1);
+      req.onupgradeneeded = (e) => {
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains("messages")) {
+          const store = d.createObjectStore("messages", { keyPath: "id" });
+          store.createIndex("chatWith", "chatWith", { unique: false });
+        }
+      };
+      req.onsuccess = (e) => {
+        db = e.target.result;
+        resolve();
+      };
+    });
+  }
+
+  function saveMessageLocally(messageObj) {
+    if (!db) return;
+    const tx = db.transaction("messages", "readwrite");
+    tx.objectStore("messages").put(messageObj);
+  }
+
+  function updateMessageStatusLocally(msgId, status) {
+    if (!db) return;
+    const tx = db.transaction("messages", "readwrite");
+    const store = tx.objectStore("messages");
+    const req = store.get(msgId);
+    req.onsuccess = () => {
+      if (req.result) {
+        req.result.status = status;
+        store.put(req.result);
+      }
+    };
+  }
+
+  function loadChatHistoryFromDevice(contactKey) {
+    if (!db) return;
+    const container = document.getElementById('messagesContainer');
+    container.innerHTML = '';
+
+    const tx = db.transaction("messages", "readonly");
+    const store = tx.objectStore("messages");
+    const index = store.index("chatWith");
+    const req = index.getAll(contactKey);
+
+    req.onsuccess = () => {
+      const messages = req.result || [];
+      messages.forEach(m => {
+        if (m.type === 'chat') {
+          renderChatBubble(m, m.direction, m.status, false);
+        } else if (m.type === 'media') {
+          renderMediaBubble(m, m.direction, m.status, false);
+        }
+      });
+      container.scrollTop = container.scrollHeight;
+    };
+  }
+
+  /* ==========================================================
+     3. GOOGLE SHEET AUTHENTICATION & DIRECTORY SYNC
+  ========================================================== */
+  async function syncUsersFromGoogleSheet() {
+    if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL.includes("YOUR_DEPLOYED_GOOGLE_SCRIPT")) {
+      console.warn("Using offline fallback directory. To enable cloud sync, insert your Google Apps Script Web App URL.");
+      family = { ...DEFAULT_FALLBACK_MEMBERS };
+      return;
+    }
+
+    try {
+      const resp = await fetch(`${GOOGLE_SHEET_API_URL}?action=getUsers`);
+      const data = await resp.json();
+      if (data.status === "success" && data.users) {
+        family = Object.assign({}, DEFAULT_FALLBACK_MEMBERS, data.users);
+      }
+    } catch (err) {
+      console.error("Google Sheets fetch error, using local cache:", err);
+      family = { ...DEFAULT_FALLBACK_MEMBERS };
+    }
+  }
+
+  async function registerUserToGoogleSheet(name, pin, peerId) {
+    if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL.includes("YOUR_DEPLOYED_GOOGLE_SCRIPT")) {
+      return true; // Bypass in offline simulation mode
+    }
+
+    try {
+      await fetch(GOOGLE_SHEET_API_URL, {
+        method: "POST",
+        mode: "no-cors", // Allows cross-origin Google Script requests
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "register", name: name, pin: pin, peerId: peerId })
+      });
+      return true;
+    } catch (err) {
+      console.error("Google Sheets write error:", err);
+      return false;
+    }
+  }
+
+  /* ==========================================================
+     4. AUTHENTICATION CONTROLLER
+  ========================================================== */
+  function toggleAuthMode() {
+    isJoinMode = !isJoinMode;
+    const title = document.getElementById('authTitle');
+    const sub = document.getElementById('authSubtitle');
+    const submitBtn = document.getElementById('authSubmitBtn');
+    const toggleBtn = document.getElementById('authToggleBtn');
+    const err = document.getElementById('authError');
+    err.style.display = 'none';
+
+    if (isJoinMode) {
+      title.textContent = 'Join Family';
+      sub.textContent = 'Your credentials will be saved in Google Sheet';
+      submitBtn.textContent = 'Create Profile & Register';
+      toggleBtn.textContent = 'Already in family? Login';
+    } else {
+      title.textContent = 'Family Login';
+      sub.textContent = 'Enter your registered Name and PIN';
+      submitBtn.textContent = 'Login';
+      toggleBtn.textContent = 'New member? Join Family';
+    }
+  }
+
+  async function handleAuthSubmit() {
+    const nameRaw = document.getElementById('authNameInput').value.trim();
+    const pin = document.getElementById('authPinInput').value.trim();
+    const err = document.getElementById('authError');
+
+    if (!nameRaw || pin.length !== 6 || isNaN(pin)) {
+      err.textContent = 'Provide a valid name and a 6-digit PIN.';
+      err.style.display = 'block';
+      return;
+    }
+
+    const key = nameRaw.toLowerCase().replace(/\s+/g, '');
+
+    if (isJoinMode) {
+      if (family[key]) {
+        err.textContent = 'This member name already exists. Please log in instead.';
+        err.style.display = 'block';
+        return;
+      }
+      const newPeerId = `wa-fam-${key}-${Date.now().toString(36)}`;
+      family[key] = { name: nameRaw, pin: pin, id: newPeerId };
+      
+      await registerUserToGoogleSheet(nameRaw, pin, newPeerId);
+      completeLogin(key);
+    } else {
+      const match = Object.keys(family).find(k => k === key || family[k].name.toLowerCase() === nameRaw.toLowerCase());
+      if (match && String(family[match].pin) === String(pin)) {
+        completeLogin(match);
+      } else {
+        err.textContent = 'Incorrect Name or PIN according to Google Sheet directory.';
+        err.style.display = 'block';
+      }
+    }
+  }
+
+  function completeLogin(userKey) {
+    currentUserId = userKey;
+    localStorage.setItem('wa_active_user', userKey);
+    document.getElementById('authModal').style.display = 'none';
+    document.getElementById('myProfileName').textContent = family[userKey].name;
+    document.getElementById('myProfileAvatar').textContent = family[userKey].name[0];
+
+    renderContacts();
+    initWebRTC();
+  }
+
+  function logout() {
+    localStorage.removeItem('wa_active_user');
+    location.reload();
+  }
+
+  /* ==========================================================
+     5. CONTACT DIRECTORY DISPLAY
+  ========================================================== */
+  function renderContacts() {
+    const container = document.getElementById('contactList');
+    container.innerHTML = '';
+
+    const list = Object.keys(family)
+      .filter(k => k !== currentUserId)
+      .sort((a, b) => (onlinePeers.has(b) ? 1 : 0) - (onlinePeers.has(a) ? 1 : 0));
+
+    list.forEach(key => {
+      const contact = family[key];
+      const isOnline = onlinePeers.has(key);
+      const item = document.createElement('div');
+      item.className = `contact-item ${activeRecipientKey === key ? 'active' : ''}`;
+      item.onclick = () => openChat(key);
+      item.innerHTML = `
+        <div class="avatar ${isOnline ? 'online' : ''}">${contact.name[0]}</div>
+        <div class="contact-details">
+          <div class="contact-title"><span>${contact.name}</span></div>
+          <div class="contact-status ${isOnline ? 'online-text' : ''}">
+            ${isOnline ? 'online' : 'tap to chat'}
+          </div>
+        </div>
+      `;
+      container.appendChild(item);
+    });
+  }
+
+  /* ==========================================================
+     6. WEBRTC (PEERJS) DIRECT DATACHANNEL NETWORKING
+  ========================================================== */
+  function initWebRTC() {
+    peer = new Peer(family[currentUserId].id, {
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' }
+        ]
+      }
+    });
+
+    peer.on('open', () => {
+      Object.keys(family).forEach(k => {
+        if (k !== currentUserId) connectToPeer(k);
+      });
+    });
+
+    peer.on('connection', setupConnectionHandlers);
+
+    peer.on('call', async (call) => {
+      const callerKey = Object.keys(family).find(k => family[k].id === call.peer);
+      const name = callerKey ? family[callerKey].name : 'Family';
+      const isVideo = call.metadata?.video !== false;
+
+      if (confirm(`Incoming ${isVideo ? 'Video' : 'Voice'} Call from ${name}. Answer?`)) {
+        openChat(callerKey);
+        try {
+          localMediaStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
+          document.getElementById('localVideo').srcObject = localMediaStream;
+          document.getElementById('callOverlay').style.display = 'flex';
+          call.answer(localMediaStream);
+          activeCall = call;
+
+          call.on('stream', (remote) => {
+            document.getElementById('remoteVideo').srcObject = remote;
+          });
+          call.on('close', hangUpCall);
+        } catch (e) {
+          alert('Device camera/mic error: ' + e.message);
+        }
+      }
+    });
+  }
+
+  function connectToPeer(targetKey) {
+    if (activeConnections[targetKey]?.open) return;
+    const conn = peer.connect(family[targetKey].id, { reliable: true });
+    setupConnectionHandlers(conn);
+  }
+
+  function setupConnectionHandlers(conn) {
+    conn.on('open', () => {
+      const partnerKey = Object.keys(family).find(k => family[k].id === conn.peer);
+      if (partnerKey) {
+        activeConnections[partnerKey] = conn;
+        onlinePeers.add(partnerKey);
+        renderContacts();
+
+        if (activeRecipientKey === partnerKey) {
+          emitReceipt(partnerKey, null, 'read');
+        }
+      }
+    });
+
+    conn.on('data', (packet) => handleIncomingPacket(packet, conn.peer));
+
+    conn.on('close', () => {
+      const partnerKey = Object.keys(family).find(k => family[k].id === conn.peer);
+      if (partnerKey) {
+        delete activeConnections[partnerKey];
+        onlinePeers.delete(partnerKey);
+        renderContacts();
+      }
+    });
+  }
+
+  /* ==========================================================
+     7. READ RECEIPTS & RECEIPT HANDLERS
+  ========================================================== */
+  function handleIncomingPacket(packet, peerId) {
+    const senderKey = Object.keys(family).find(k => family[k].id === peerId);
+    if (!senderKey) return;
+
+    if (packet.type === 'receipt') {
+      updateTickUI(packet.msgId, packet.status);
+      updateMessageStatusLocally(packet.msgId, packet.status);
+      return;
+    }
+
+    if (packet.type === 'chat' || packet.type === 'media') {
+      // 1. Acknowledge delivery
+      emitReceipt(senderKey, packet.id, 'delivered');
+
+      // 2. Acknowledge read if active
+      const isViewing = activeRecipientKey === senderKey;
+      if (isViewing) {
+        emitReceipt(senderKey, packet.id, 'read');
+      }
+
+      // 3. Persist in local browser IndexedDB permanently
+      saveMessageLocally({
+        ...packet,
+        chatWith: senderKey,
+        direction: 'received',
+        status: isViewing ? 'read' : 'delivered'
+      });
+
+      // 4. Render only if current conversation is open
+      if (isViewing) {
+        if (packet.type === 'chat') {
+          renderChatBubble(packet, 'received', 'delivered', true);
+        } else {
+          renderMediaBubble(packet, 'received', 'delivered', true);
+        }
+      }
+    }
+  }
+
+  function emitReceipt(targetKey, msgId, status) {
+    if (activeConnections[targetKey]?.open) {
+      activeConnections[targetKey].send({
+        type: 'receipt',
+        msgId: msgId,
+        status: status
+      });
+    }
+  }
+
+  function updateTickUI(msgId, status) {
+    if (!msgId) {
+      document.querySelectorAll('.tick.sent, .tick.delivered').forEach(el => {
+        el.className = 'tick read';
+        el.textContent = '✓✓';
+      });
+      return;
+    }
+    const tickEl = document.getElementById(`tick-${msgId}`);
+    if (!tickEl) return;
+
+    if (status === 'delivered') {
+      tickEl.className = 'tick delivered';
+      tickEl.textContent = '✓✓';
+    } else if (status === 'read') {
+      tickEl.className = 'tick read';
+      tickEl.textContent = '✓✓';
+    }
+  }
+
+  /* ==========================================================
+     8. CHAT, MEDIA PREVIEWS & BUBBLE RENDERING
+  ========================================================== */
+  function openChat(targetKey) {
+    activeRecipientKey = targetKey;
+    document.getElementById('chatTitle').textContent = family[targetKey].name;
+    document.getElementById('chatAvatar').textContent = family[targetKey].name[0];
+    document.getElementById('chatView').classList.add('active');
+
+    connectToPeer(targetKey);
+    renderContacts();
+
+    // Load conversation history from client device
+    loadChatHistoryFromDevice(targetKey);
+    emitReceipt(targetKey, null, 'read');
+  }
+
+  function closeChat() {
+    document.getElementById('chatView').classList.remove('active');
+    activeRecipientKey = null;
+  }
+
+  function sendText() {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if (!text || !activeRecipientKey) return;
+
+    const msgId = 'msg-' + Date.now();
+    const isConnected = activeConnections[activeRecipientKey]?.open;
+    const initialStatus = isConnected ? 'sent' : 'queued';
+
+    const packet = {
+      type: 'chat',
+      id: msgId,
+      text: text,
+      from: currentUserId,
+      to: activeRecipientKey,
+      time: getCurrentTime()
+    };
+
+    saveMessageLocally({
+      ...packet,
+      chatWith: activeRecipientKey,
+      direction: 'sent',
+      status: initialStatus
+    });
+
+    renderChatBubble(packet, 'sent', initialStatus, true);
+
+    if (isConnected) {
+      activeConnections[activeRecipientKey].send(packet);
+    }
+
+    input.value = '';
+  }
+
+  function renderChatBubble(data, direction, status = 'delivered', shouldScroll = true) {
+    const container = document.getElementById('messagesContainer');
+    const msg = document.createElement('div');
+    msg.className = `message ${direction}`;
+    msg.id = `msg-${data.id}`;
+
+    const tickMarkup = direction === 'sent'
+      ? `<span class="tick ${status}" id="tick-${data.id}">${status === 'queued' ? '🕒' : status === 'read' ? '✓✓' : '✓'}</span>`
+      : '';
+
+    msg.innerHTML = `
+      <div>${escapeHTML(data.text)}</div>
+      <div class="msg-meta">
+        <span>${data.time || getCurrentTime()}</span>
+        ${tickMarkup}
+      </div>
+    `;
+    container.appendChild(msg);
+    if (shouldScroll) container.scrollTop = container.scrollHeight;
+  }
+
+  function toggleAttachmentMenu() {
+    const menu = document.getElementById('attachmentMenu');
+    menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+  }
+
+  function handleFileSelected(e) {
+    toggleAttachmentMenu();
+    const file = e.target.files[0];
+    if (!file || !activeRecipientKey) return;
+
+    const fileId = 'file-' + Date.now();
+    const isConnected = activeConnections[activeRecipientKey]?.open;
+    const initialStatus = isConnected ? 'sent' : 'queued';
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      const dataUri = event.target.result;
+      const packet = {
+        type: 'media',
+        id: fileId,
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        data: dataUri,
+        from: currentUserId,
+        to: activeRecipientKey,
+        time: getCurrentTime()
+      };
+
+      saveMessageLocally({
+        ...packet,
+        chatWith: activeRecipientKey,
+        direction: 'sent',
+        status: initialStatus
+      });
+
+      renderMediaBubble(packet, 'sent', initialStatus, true);
+
+      if (isConnected) {
+        activeConnections[activeRecipientKey].send(packet);
+      }
+    };
+
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  }
+
+  function renderMediaBubble(data, direction, status = 'delivered', shouldScroll = true) {
+    const container = document.getElementById('messagesContainer');
+    const msg = document.createElement('div');
+    msg.className = `message ${direction}`;
+    msg.id = `msg-${data.id}`;
+
+    const tickMarkup = direction === 'sent'
+      ? `<span class="tick ${status}" id="tick-${data.id}">${status === 'queued' ? '🕒' : status === 'read' ? '✓✓' : '✓'}</span>`
+      : '';
+
+    let content = '';
+    const type = data.fileType || '';
+
+    if (type.startsWith('image/')) {
+      content = `
+        <div class="media-thumb-box" onclick="openLightbox('${data.data}', '${escapeHTML(data.fileName)}', 'image')">
+          <img src="${data.data}" alt="${escapeHTML(data.fileName)}" />
+        </div>`;
+    } else if (type.startsWith('video/')) {
+      content = `
+        <div class="media-thumb-box" onclick="openLightbox('${data.data}', '${escapeHTML(data.fileName)}', 'video')">
+          <video src="${data.data}"></video>
+        </div>`;
+    } else if (type.startsWith('audio/')) {
+      content = `<audio src="${data.data}" controls style="width: 100%; margin: 4px 0;"></audio>`;
+    } else {
+      content = `
+        <div class="doc-bubble" onclick="openLightbox('${data.data}', '${escapeHTML(data.fileName)}', 'doc')">
+          <span style="font-size: 26px;">📄</span>
+          <div style="overflow: hidden;">
+            <div style="font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${escapeHTML(data.fileName)}</div>
+            <small style="color: var(--wa-text-secondary);">${formatBytes(data.fileSize)} • View</small>
+          </div>
+        </div>`;
+    }
+
+    msg.innerHTML = `
+      ${content}
+      <div class="msg-meta">
+        <span>${data.time || getCurrentTime()}</span>
+        ${tickMarkup}
+      </div>
+    `;
+    container.appendChild(msg);
+    if (shouldScroll) container.scrollTop = container.scrollHeight;
+  }
+
+  /* Lightbox Controls */
+  function openLightbox(url, name, kind) {
+    const box = document.getElementById('mediaLightbox');
+    const body = document.getElementById('lightboxBody');
+    document.getElementById('lightboxTitle').textContent = name;
+    document.getElementById('lightboxDownloadBtn').onclick = () => {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      a.click();
+    };
+
+    body.innerHTML = '';
+    if (kind === 'image') {
+      body.innerHTML = `<img src="${url}" alt="${name}" />`;
+    } else if (kind === 'video') {
+      body.innerHTML = `<video src="${url}" controls autoplay playsinline></video>`;
+    } else {
+      body.innerHTML = `<iframe src="${url}"></iframe>`;
+    }
+    box.style.display = 'flex';
+  }
+
+  function closeLightbox() {
+    document.getElementById('mediaLightbox').style.display = 'none';
+    document.getElementById('lightboxBody').innerHTML = '';
+  }
+
+  /* ==========================================================
+     9. CALLING ENGINE & UTILITIES
+  ========================================================== */
+  async function startCall(isVideo) {
+    if (!activeRecipientKey) return;
+    try {
+      localMediaStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
+      document.getElementById('localVideo').srcObject = localMediaStream;
+      document.getElementById('callOverlay').style.display = 'flex';
+
+      const call = peer.call(family[activeRecipientKey].id, localMediaStream, { metadata: { video: isVideo } });
+      activeCall = call;
+
+      call.on('stream', (remote) => {
+        document.getElementById('remoteVideo').srcObject = remote;
+      });
+      call.on('close', hangUpCall);
+    } catch (e) {
+      alert('Camera/Microphone error: ' + e.message);
+    }
+  }
+
+  function toggleAudioTrack() {
+    if (localMediaStream) {
+      const track = localMediaStream.getAudioTracks()[0];
+      if (track) {
+        track.enabled = !track.enabled;
+        document.getElementById('muteMicBtn').textContent = track.enabled ? '🎤' : '🔇';
+      }
+    }
+  }
+
+  function toggleVideoTrack() {
+    if (localMediaStream) {
+      const track = localMediaStream.getVideoTracks()[0];
+      if (track) {
+        track.enabled = !track.enabled;
+        document.getElementById('muteCamBtn').textContent = track.enabled ? '📹' : '🚫';
+      }
+    }
+  }
+
+  function hangUpCall() {
+    if (activeCall) activeCall.close();
+    if (localMediaStream) localMediaStream.getTracks().forEach(t => t.stop());
+    document.getElementById('callOverlay').style.display = 'none';
+    document.getElementById('remoteVideo').srcObject = null;
+    document.getElementById('localVideo').srcObject = null;
+  }
+
+  function getCurrentTime() {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function formatBytes(bytes) {
+    if (!bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  function escapeHTML(str) {
+    return (str || '').replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t] || t));
+  }
+
+  /* App Entrypoint */
+  window.addEventListener('DOMContentLoaded', async () => {
+    await initLocalDB();
+    await syncUsersFromGoogleSheet();
+
+    const stored = localStorage.getItem('wa_active_user');
+    if (stored && family[stored]) {
+      completeLogin(stored);
+    } else {
+      document.getElementById('authSubtitle').textContent = 'Enter your name and 6-digit PIN';
+      document.getElementById('authModal').style.display = 'flex';
+    }
+  });
+</script>
+
+</body>
+</html>
